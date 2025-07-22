@@ -1,0 +1,152 @@
+* {
+    margin: 0;
+    padding: 0;
+    font-family: Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
+}
+
+.excel {
+    width: 100%;
+    height: 100%;
+    user-select: none;
+    contain: content;
+}
+
+.excel-layer {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.excel-layer-element {
+    overflow: hidden;
+}
+
+.excel-option {
+    overflow: hidden;
+    background: #f1f1f1;
+}
+
+.excel-option-left {
+    float: left;
+    padding: 10px;
+}
+.excel-option-logo {
+    background-image: url(./img/material_common_1.svg?e64c2ae…);
+    background-repeat: no-repeat;
+    background-position: 0 -3910px;
+    width: 40px;
+    height: 40px;
+}
+
+.excel-option-right {
+    float: left;
+    padding: 5px;
+}
+
+.excel-option-title {
+    color: #787878;
+    font-size: 18px;
+}
+.excel-option-box {
+    overflow: hidden;
+    margin-top: 5px;
+}
+.excel-option-item {
+    float: left;
+    margin-right: 10px;
+    font-size: 15px;
+    padding: 4px 6px 4px 6px;
+    cursor: pointer;
+    border-radius: 2px;
+}
+
+/* --- 表格主体区域 --- */
+
+
+/* --- 表格核心结构  --- */
+
+
+
+/* --- 底部状态栏 --- */
+
+.excel-bottom-menu {
+    height: 30px;
+    background: #e3e3e3;
+}
+
+.excel-bottom-grid {
+    height: 25px;
+    width: 25px;
+    background-image: url(data:image/svg+xml;base64,PHN2ZyB0PSIxNTk0Mzc4ODk5Mzc3IiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjIwNzUiDQogICAgIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj4NCjxwYXRoIGQ9Ik05ODQgNTUyYTQwIDQwIDAgMCAwIDAtODBoLTk2VjIxNmg5NmE0MCA0MCAwIDAgMCAwLTgwaC05NlY0MGE0MCA0MCAwIDAgMC04MCAwdjk2SDU1MlY0MGE0MCA0MCAwIDAgMC04MCAwdjk2SDIxNlY0MGE0MCA0MCAwIDAgMC04MCAwdjk2SDQwYTQwIDQwIDAgMCAwIDAgODBoOTZ2MjU2SDQwYTQwIDQwIDAgMCAwIDAgODBoOTZ2MjU2SDQwYTQwIDQwIDAgMCAwIDAgODBoOTZ2OTZhNDAgNDAgMCAwIDAgODAgMHYtOTZoMjU2djk2YTQwIDQwIDAgMCAwIDgwIDB2LTk2aDI1NnY5NmE0MCA0MCAwIDAgMCA4MCAwdi05Nmg5NmE0MCA0MCAwIDAgMCAwLTgwaC05NlY1NTJ6IG0tMTc2LTMzNnYyNTZINTUyVjIxNnogbS01OTIgMGgyNTZ2MjU2SDIxNnogbTAgNTkyVjU1MmgyNTZ2MjU2eiBtNTkyIDBINTUyVjU1MmgyNTZ6Ig0KICAgICAgcC1pZD0iMjA3NiIgZmlsbD0iIzk5OSI+PC9wYXRoPg0KPC9zdmc+DQo=);
+    background-size: 60%;
+    background-position: center;
+    background-repeat: no-repeat;
+    float: right;
+    margin: 2.5px 10px 2.5px 0;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.excel-bottom-full-screen {
+    height: 25px;
+    width: 25px;
+    background-image: url(data:image/svg+xml;base64,PHN2ZyB0PSIxNTk0OTA4MzMyMDA0IiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjI4OTQiDQogICAgIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj4NCiAgICA8cGF0aCBkPSJNODg0LjM5MiA5NzAuMzMzSDY3MS44ODdjLTIzLjAxIDAtNDEuNjY2LTE4LjY1Ni00MS42NjYtNDEuNjY2IDAtMjMuMDExIDE4LjY1Ni00MS42NjcgNDEuNjY2LTQxLjY2N2gyMTIuNTA1VjY5MS4xNThjMC0yMy4wMSAxOC42NTYtNDEuNjY2IDQxLjY2Ni00MS42NjYgMjMuMDExIDAgNDEuNjY3IDE4LjY1NiA0MS42NjcgNDEuNjY2Vjg4N2MwIDQ1Ljk1OS0zNy4zOTUgODMuMzMzLTgzLjMzMyA4My4zMzN6IG0tNTQxLjY2NyAwSDEzNC4zOTFjLTQ1Ljk0OSAwLTgzLjMzMy0zNy4zNzQtODMuMzMzLTgzLjMzM1Y2NzguNjY3YzAtMjMuMDExIDE4LjY1Ni00MS42NjcgNDEuNjY3LTQxLjY2N3M0MS42NjcgMTguNjU2IDQxLjY2NyA0MS42NjdWODg3aDIwOC4zMzNjMjMuMDEgMCA0MS42NjYgMTguNjU2IDQxLjY2NiA0MS42NjcgMCAyMy4wMS0xOC42NTcgNDEuNjY2LTQxLjY2NiA0MS42NjZ6IG0tMjUwLTU4Ny41MDRjLTIzLjAxIDAtNDEuNjY3LTE4LjY1Ni00MS42NjctNDEuNjY3VjEzN2MwLTQ1Ljk1OSAzNy4zODQtODMuMzMzIDgzLjMzMy04My4zMzNoMjA0LjE2M2MyMy4wMSAwIDQxLjY2NyAxOC42NTcgNDEuNjY3IDQxLjY2N1MzNjEuNTY0IDEzNyAzMzguNTU0IDEzN0gxMzQuMzkxdjIwNC4xNjJjMCAyMy4wMTEtMTguNjU2IDQxLjY2Ny00MS42NjYgNDEuNjY3eiBtODMzLjMzMy04LjMyMWMtMjMuMDEgMC00MS42NjYtMTguNjU2LTQxLjY2Ni00MS42NjZWMTM3SDY3MS44ODdjLTIzLjAxIDAtNDEuNjY2LTE4LjY1Ni00MS42NjYtNDEuNjY3czE4LjY1Ni00MS42NjcgNDEuNjY2LTQxLjY2N2gyMTIuNTA1YzQ1LjkzOCAwIDgzLjMzMyAzNy4zNzQgODMuMzMzIDgzLjMzM3YxOTUuODQyYzAgMjMuMDExLTE4LjY1NyA0MS42NjctNDEuNjY3IDQxLjY2N3oiDQogICAgICAgICAgcC1pZD0iMjg5NSIgZmlsbD0iIzk5OSI+PC9wYXRoPg0KPC9zdmc+DQo=);
+    background-size: 60%;
+    background-position: center;
+    background-repeat: no-repeat;
+    float: right;
+    margin: 2.5px 0 2.5px 0;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.excel-bottom-sum {
+    height: 100%;
+    float: left;
+    line-height: 30px;
+    margin-left: 10px;
+    margin-right: 8px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.excel-bottom-avg {
+    height: 100%;
+    float: left;
+    line-height: 30px;
+    margin-right: 8px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.excel-bottom-number {
+    height: 100%;
+    float: left;
+    line-height: 30px;
+    margin-right: 8px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.excel-xwork-task-progress {
+    width: 150px;
+    height: 15px;
+    float: left;
+    margin-top: 7px;
+    margin-left: 7px;
+}
+
+.excel-xwork-task-progress-bar {
+    height: 100%;
+    font-size: 12px;
+    line-height: 20px;
+    color: #fff;
+    text-align: center;
+    animation: reverse progress-bar-stripes 0.4s linear infinite, animate-positive 2s;
+    background-color: #5cb85c;
+    transition: width 0.6s ease;
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+    background-size: 40px 40px;
+}
