@@ -1,4 +1,12 @@
-* {
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    height: 100vh;
+}
+
+*{
     margin: 0;
     padding: 0;
     font-family: Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
@@ -13,7 +21,7 @@
 
 .excel-layer {
     width: 100%;
-    height: 100%;
+    height: 70px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -32,6 +40,7 @@
     float: left;
     padding: 10px;
 }
+
 .excel-option-logo {
     background-image: url(./img/material_common_1.svg?e64c2ae…);
     background-repeat: no-repeat;
@@ -49,10 +58,12 @@
     color: #787878;
     font-size: 18px;
 }
+
 .excel-option-box {
     overflow: hidden;
     margin-top: 5px;
 }
+
 .excel-option-item {
     float: left;
     margin-right: 10px;
@@ -60,16 +71,96 @@
     padding: 4px 6px 4px 6px;
     cursor: pointer;
     border-radius: 2px;
+    position: relative;
+}
+
+.dropdown-content {
+    display: none; /* 默认隐藏 */
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px; 
+    box-shadow: 0 2px 6px 2px rgba(60, 64, 67, 0.15);
+    z-index: 3;
+    top:0; 
+    left: 0;
+    border-radius: 4px;
+    padding: 8px; 
+}
+
+.excel-option-item.active .dropdown-content {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 5px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; 
+}
+
+.dropdown-item label {
+    margin-right: 10px;
+    font-size: 14px;
+    color: #333;
+}
+
+.dropdown-item input[type="number"] {
+    width: 80px;
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.dropdown-actions {
+    margin-top: 10px;
+    text-align: right; 
+}
+
+.dropdown-actions button {
+    padding: 6px 12px;
+    margin-left: 8px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+#menu-apply {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#menu-apply:hover {
+    background-color: #45a049;
+}
+
+#menu-cancel {
+    background-color: #f44336;
+    color: white;
+}
+
+#menu-cancel:hover {
+    background-color: #da190b;
 }
 
 /* --- 表格主体区域 --- */
+.main-excel {
+    position: relative;
+    overflow: auto;
 
+}
 
-/* --- 表格核心结构  --- */
-
-
+/* --- 表格核心结构 --- */
 
 /* --- 底部状态栏 --- */
+.app-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+}
 
 .excel-bottom-menu {
     height: 30px;

@@ -22,20 +22,33 @@
                             <div class="excel-option-item excel-tools-update">编辑</div>
                             <div class="excel-option-item excel-tools-insert">插入</div>
                             <div class=" excel-option-item excel-tools-look">查看</div>
-                            <div class=" excel-option-item excel-tools-format">格式</div>
+                            <div id="format-menu-trigger" class=" excel-option-item excel-tools-format">格式
+                                <div id="format-dropdown-content" class="dropdown-content">
+                                    <div class="dropdown-item">
+                                        <label for="menu-rows">行:</label>
+                                        <input type="number" id="menu-rows" min="1" value="10">
+                                    </div>
+                                    <div class="dropdown-item">
+                                        <label for="menu-cols">列:</label>
+                                        <input type="number" id="menu-cols" min="1" value="8">
+                                    </div>
+                                    <div class="dropdown-actions">
+                                        <button id="menu-apply">应用</button>
+                                        <button id="menu-cancel">取消</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <div class="main-excel">
+            <canvas id="main-excel-canvas" style="background-repeat: no-repeat; cursor: default;"></canvas>
+        </div>
 
-        <main class="app-body" style="flex-grow: 1;">
-
-        </main>
-
-
-        <footer class="app-footer">
+        <div class="app-footer">
             <div class="excel-container">
                 <div class="excel-bottom-menu">
                     <div class="excel-bottom-grid"></div>
@@ -51,10 +64,10 @@
                     <div class="progress-bar"></div>
                 </div>
             </div>
-        </footer>
-
+        </div>
     </div>
 
+    <script src="draw.js"></script>
     <script src="app.js"></script>
 </body>
 

@@ -1,44 +1,90 @@
-var canvas = document.getElementById("tutorial");
-// var ctx = canvas.getContext("2d");
-// /document.getElementById() 方法来为 <canvas> 元素得到 DOM 对象。 getContext() 方法来访问绘画上下文
+// app.js
+class AppManager {
+    constructor() {
+        this.excelCanvas = null; 
+        this.formatMenuTrigger = document.getElementById("format-menu-trigger");
+        this.formatDropdownContent = document.getElementById("format-dropdown-content");
+        this.menuRows = document.getElementById("menu-rows");
+        this.menuCols = document.getElementById("menu-cols");
+        this.menuApply = document.getElementById("menu-apply");
+        this.menuCancel = document.getElementById("menu-cancel");
 
-function draw() {
-    var canvas = document.getElementById("canvas");
-    if (canvas.getContext) {
-        var ctx = canvas.getContext("2d");
-        //绘制一个矩形的边框，边框色为当前的 strokeStyle
-        ctx.strokeStyle = "rgba(0, 0, 0, 1)"
-        ctx.strokeRect(0, 0, 200, 200);
+        this.init();
+    }
 
-        //fillRect(x, y, width, height)
-        // fillRect() 方法绘制一个填充了内容的矩形，这个矩形的开始点（左上点）在 (x, y) ，
-        // 它的宽度和高度分别由 width 和 height 确定，填充样式由当前的 fillStyle 决定。
-        ctx.fillStyle = "rgba(200,0,0, 0.5)";
-        ctx.fillRect(10, 10, 55, 50);
+    init() {
+        this.excelCanvas = new ExcelCanvas("main-excel-canvas", { numRows: 10, numCols: 8 });
+        this.excelCanvas.initDraw();
 
-        ctx.fillStyle = "rgba(0, 0, 200, 0.5)";
-        ctx.fillRect(30, 30, 55, 50);
+        this.addEventListeners();
+    }
 
-        //这个方法通过把像素设置为透明，以达到擦除一个矩形区域的效果。
-        ctx.clearRect(100, 100, 10, 10);
+    addEventListeners() {
+        this.formatMenuTrigger.addEventListener("click", (event) => {
+            event.stopPropagation(); 
+            this.toggleDropdown();
+        });
 
-        // 填充三角形
-        ctx.fillStyle = "rgba(153, 184, 167, 0.5)";
-        ctx.beginPath();
-        ctx.moveTo(25, 25);//设置起点，绘制不连续的路径
-        ctx.lineTo(105, 25); //绘制直线 25，25到105，25绘制一条从当前位置到指定坐标 (x,y) 的直线
-        ctx.lineTo(25, 105);
-        ctx.fill(); // 自动闭合路径
+        this.menuApply.addEventListener("click", () => {
+            this.applyChanges();
+        });
 
-        // 描边三角形
-        ctx.beginPath();
-        ctx.moveTo(125, 25);
-        ctx.lineTo(125, 105);
-        ctx.lineTo(205, 25);
-        ctx.closePath(); // 手动闭合路径
-        ctx.stroke();
+        this.menuCancel.addEventListener("click", () => {
+            this.hideDropdown();
+        });
 
+        document.addEventListener("click", (event) => {
+            if (!this.formatMenuTrigger.contains(event.target)) {
+                this.hideDropdown();
+            }
+        });
+    }
+
+    toggleDropdown() {
+        const isDisplayed = this.formatDropdownContent.style.display === "block";
+        if (isDisplayed) {
+            this.hideDropdown();
+        } else {
+            this.showDropdown();
+        }
+    }
+
+    showDropdown() {
+        this.formatDropdownContent.style.display = "block";
+        this.formatMenuTrigger.classList.add("active"); 
+        this.menuRows.value = this.excelCanvas.options.numRows;
+        this.menuCols.value = this.excelCanvas.options.numCols;
+    }
+
+    hideDropdown() {
+        this.formatDropdownContent.style.display = "none";
+        this.formatMenuTrigger.classList.remove("active"); 
+    }
+
+    applyChanges() {
+        const newRows = parseInt(this.menuRows.value);
+        const newCols = parseInt(this.menuCols.value);
+
+        let isValid = true;
+
+        if (isNaN(newRows) || newRows <= 0) {
+            alert("行数输入无效，请输入大于0的整数。");
+            isValid = false;
+        }
+
+        if (isNaN(newCols) || newCols <= 0) {
+            alert("列数输入无效，请输入大于0的整数。");
+            isValid = false;
+        }
+
+        if (isValid) {
+            this.excelCanvas.setRows(newRows);
+            this.excelCanvas.setCols(newCols);
+            this.hideDropdown(); 
+        }
     }
 }
 
-document.addEventListener("DOMContentLoaded", draw);
+document.addEventListener("DOMContentLoaded", () => {
+    new AppManager();
+});
