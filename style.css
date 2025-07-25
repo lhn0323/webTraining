@@ -76,15 +76,15 @@ body {
 
 .dropdown-content {
     display: none; /* 默认隐藏 */
-    position: absolute;
+    position: fixed;
     background-color: #f9f9f9;
-    min-width: 160px; 
+    min-width: 160px;
     box-shadow: 0 2px 6px 2px rgba(60, 64, 67, 0.15);
     z-index: 3;
-    top:0; 
-    left: 0;
+    top: 71px;
+    left: 278px;
     border-radius: 4px;
-    padding: 8px; 
+    padding: 8px;
 }
 
 .excel-option-item.active .dropdown-content {
@@ -147,11 +147,20 @@ body {
 
 /* --- 表格主体区域 --- */
 .main-excel {
+    width: 1918px; /* 容器的固定宽度 */
+    height: 813px;
     position: relative;
     overflow: auto;
-
 }
-
+.excel-editor-input {
+    position: absolute; 
+    padding: 0;
+    margin: 0;
+    border: 1px solid #1a73e8b9; 
+    outline: none;
+    box-sizing: border-box;
+    text-align: center;
+}
 /* --- 表格核心结构 --- */
 
 /* --- 底部状态栏 --- */
