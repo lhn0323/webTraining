@@ -12,7 +12,7 @@ class AppManager {
     }
 
     init() {
-        this.excelCanvas = new excelCanvas("main-excel-canvas",  { numRows: 10, numCols: 8 });
+        this.excelCanvas = new excelCanvas("main-excel-canvas");
         this.excelCanvas.initDraw();
         this.addEventListeners();
     }

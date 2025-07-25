@@ -17,8 +17,8 @@ class excelCanvas {
             minCellSize: 20,
             headerLetterHeight: 30,
             headerNumberWidth: 50,
-            numRows: 10,
-            numCols: 8,
+            numRows: 33,
+            numCols: 16,
             resizeThreshold: 5,
             borderColor: "#ccc",
             borderWidth: 1,
@@ -26,7 +26,8 @@ class excelCanvas {
             textColor: "#000000ff",
             font: "14px Arial, sans-serif",
             resizeLineColor: "#1a73e8b9",
-            resizeLineWidth: 2
+            resizeLineWidth: 2,
+            selectionRowsOrCols: "rgba(181, 211, 190, 0.5)"
         }
 
         this.options = { ...defaultOptions, ...options };
@@ -35,10 +36,10 @@ class excelCanvas {
         this.rowHeights = new Array(this.options.numRows).fill(this.options.defaultCellHeight);
         this.colWidths = new Array(this.options.numCols).fill(this.options.defaultCellWidth);
 
-        this.cellsData = Array.from({length:this.options.numRows},() => new Array(this.options.numCols).fill(''));
+        this.cellsData = Array.from({ length: this.options.numRows }, () => new Array(this.options.numCols).fill(''));
 
         this.isEditing = false;
-        this.editingCell = {row:-1,col:-1};
+        this.editingCell = { row: -1, col: -1 };
         this.eidtorInput = null;
 
         this.isResizing = false;
@@ -51,8 +52,16 @@ class excelCanvas {
         this.scrollOffsetX = 0;
         this.scrollOffsetY = 0;
 
+        this.selectedRows = new Set();
+        this.selectedCols = new Set();
+        this.activeHeader = null;
+
+        this.contextMenu = null;
 
         this.addEventListeners();
+
+        this.boundHideContextMenu = this.hideContextMenu.bind(this);
+        document.addEventListener('click', this.boundHideContextMenu);
     }
 
     initDraw() {
@@ -61,7 +70,7 @@ class excelCanvas {
         const {
             headerLetterHeight, headerNumberWidth,
             numRows, numCols, borderColor, borderWidth, headerBgColor,
-            textColor, font
+            textColor, font, selectionRowsOrCols
         } = this.options;
 
         let totalContentWidth = 0, totalContentHeight = 0;
@@ -148,10 +157,28 @@ class excelCanvas {
                 if (cellValue !== '' && !(this.isEditing && this.editingCell.row === r && this.editingCell.col === c)) {
                     this.ctx.fillText(cellValue, cellX + this.colWidths[c] / 2, cellY + this.rowHeights[r] / 2);
                 }
-                cellX +=this.colWidths[c];
+                cellX += this.colWidths[c];
             }
             cellY += this.rowHeights[r];
         }
+
+        // ---绘制整行和列---
+        this.ctx.fillStyle = selectionRowsOrCols;
+        let currrentYSelection = headerLetterHeight;
+        for (let r = 0; r < numRows; r++) {
+            if (this.selectedCols.has(r)) {
+                this.ctx.fillRect(headerNumberWidth, currrentYSelection, totalContentWidth, this.rowHeights[r]);
+            }
+            currrentYSelection += this.rowHeights[r];
+        }
+        let currentXForSelection = headerNumberWidth;
+        for (let c = 0; c < numCols; c++) {
+            if (this.selectedRows.has(c)) {
+                this.ctx.fillRect(currentXForSelection, headerLetterHeight, this.colWidths[c], totalContentHeight);
+            }
+            currentXForSelection += this.colWidths[c];
+        }
+
         this.ctx.restore();
     }
 
@@ -165,7 +192,7 @@ class excelCanvas {
                 }
             } else {
                 this.rowHeights = this.rowHeights.slice(0, newRows);
-                this.cellsData = this.cellsData.slice(0,newRows);
+                this.cellsData = this.cellsData.slice(0, newRows);
             }
             this.options.numRows = newRows;
             this.initDraw();
@@ -181,9 +208,9 @@ class excelCanvas {
                 for (let i = 0; i < diff; i++) {
                     this.colWidths.push(this.options.defaultCellWidth);
                 }
-                for(let r = 0;r<this.cellsData.length;r++){
-                    for(let i = 0; i < diff; i++){
-                         this.cellsData[r].push('');
+                for (let r = 0; r < this.cellsData.length; r++) {
+                    for (let i = 0; i < diff; i++) {
+                        this.cellsData[r].push('');
                     }
                 }
             } else {
@@ -199,59 +226,172 @@ class excelCanvas {
         }
     }
 
-    // setRowCount(rowCount) {
-    //     if (typeof rowCount === 'number' && rowCount > 0) {
-    //         this.options.numRows = rowCount;
-    //         this.initDraw(); 
-    //     } else {
-    //         console.warn("无效的行数输入。");
-    //     }
-    // }
-    // setColumnCount(colCount) {
-    //     if (typeof colCount === 'number' && colCount > 0) {
-    //         this.options.numCols = colCount;
-    //         this.initDraw(); 
-    //     } else {
-    //         console.warn("无效的列数输入。");
-    //     }
-    // }
-
-    // setRowHeight(row, height) {
-
-    // }
-    // getRowHeight(row) {
-
-    // }
-    // setColumnWidth(col, width) {
-
-    // }
-    // getColumnWidth(col) {
-
-    // }
-    // setValue (row, col, value) {
-
-    // }
-    // getValue(row, col) {
-
-    // }
-
-    // resize功能 鼠标事件按下 移动 释放
     addEventListeners() {
         this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
         this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
         document.addEventListener('mouseup', this.handleMouseUp.bind(this));
-        this.canvas.addEventListener('dblclick',this.handleDoubleClick.bind(this))
+        this.canvas.addEventListener('dblclick', this.handleDoubleClick.bind(this))
         this.container.addEventListener('scroll', this.handleScroll.bind(this));
+        this.canvas.addEventListener("contextmenu", this.handleContextMenu.bind(this));
     }
-    handleDoubleClick(event){
-        if(this.isEditing){
+
+    handleContextMenu(event) {
+        event.preventDefault();
+        const mousePos = this.getMousePos(event);
+        const headInfo = this.getHeadIndex(mousePos.x + this.scrollOffsetX, mousePos.y + this.scrollOffsetY);
+        this.hideContextMenu();
+
+        if (headInfo && (headInfo.type === 'row' || headInfo.type === 'col')) {
+            this.selectedRows.clear();
+            this.selectedCols.clear();
+            if (headInfo.type === 'row') {
+                this.selectedCols.add(headInfo.index);
+            } else {
+                this.selectedRows.add(headInfo.index);
+            }
+            this.initDraw();
+            this.activeHeader = { type: headInfo.type, index: headInfo.index };
+            this.showContextMenu(event.clientX, event.clientY, headInfo.type);
+        } else {
+            this.activeHeader = null;
+            this.selectedRows.clear();
+            this.selectedCols.clear();
+
+        }
+    }
+    showContextMenu(x, y, type) {
+        this.hideContextMenu();
+        this.contextMenu = document.createElement('div');
+        this.contextMenu.className = 'excel-context-menu';
+        this.contextMenu.style.position = 'fixed';
+        this.contextMenu.style.left = `${x}px`;
+        this.contextMenu.style.top = `${y}px`;
+
+        this.contextMenu.addEventListener('click', (e) => e.stopPropagation());
+        this.contextMenu.addEventListener('contextmenu', (e) => e.stopPropagation());
+
+        const createMenuItem = (text, action) => {
+            const item = document.createElement('div');
+            item.className = 'excel-context-menu-item';
+            item.textContent = text;
+            item.onclick = (e) => {
+                e.stopPropagation();
+                action();
+                this.hideContextMenu();
+            };
+            return item;
+        };
+        if (type === 'row') {
+            this.contextMenu.appendChild(createMenuItem('在上方插入行', this.insertRow.bind(this, this.activeHeader.index)));
+            this.contextMenu.appendChild(createMenuItem('在下方插入行', this.insertRow.bind(this, this.activeHeader.index + 1)));
+            this.contextMenu.appendChild(createMenuItem('删除行', this.deleteRow.bind(this, this.activeHeader.index)));
+        } else if (type === 'col') {
+            this.contextMenu.appendChild(createMenuItem('在左侧插入列', this.insertCol.bind(this, this.activeHeader.index)));
+            this.contextMenu.appendChild(createMenuItem('在右侧插入列', this.insertCol.bind(this, this.activeHeader.index + 1)));
+            this.contextMenu.appendChild(createMenuItem('删除列', this.deleteCol.bind(this, this.activeHeader.index)));
+        }
+
+        document.body.appendChild(this.contextMenu);
+    }
+
+    insertCol(index) {
+        for (let i = 0; i < this.cellsData.length; i++) {
+            this.cellsData[i].splice(index, 0, '');
+        }
+        this.colWidths.splice(index, 0, this.options.defaultCellWidth);
+        this.options.numCols++;
+        this.selectedRows.clear();
+        this.selectedCols.clear();
+        this.activeHeader = null;
+        this.initDraw();
+    }
+
+    deleteCol(index) {
+        if (this.options.numRows <= 1) {
+            alert("只剩一列，无法删除")
+            return;
+        }
+        for (let i = 0; i < this.cellsData.length; i++) {
+            this.cellsData[i].splice(index, 1);
+        }
+        this.colWidths.splice(index, 1);
+        this.options.numCols--;
+        this.selectedRows.clear();
+        this.selectedCols.clear();
+        this.activeHeader = null;
+        this.initDraw();
+    }
+    //行
+    insertRow(index) {
+        this.cellsData.splice(index, 0, new Array(this.options.numCols).fill(''));
+        this.rowHeights.splice(index, 0, this.options.defaultCellHeight);
+        this.options.numRows++;
+        this.selectedRows.clear();
+        this.selectedCols.clear();
+        this.activeHeader = null;
+        this.initDraw();
+    }
+
+    deleteRow(index) {
+        if (this.options.numRows <= 1) {
+            alert("只剩一行，无法删除")
+            return;
+        }
+        this.rowHeights.splice(index, 1);
+        this.cellsData.splice(index, 1);
+        this.options.numRows--;
+        this.selectedRows.clear();
+        this.selectedCols.clear();
+        this.activeHeader = null;
+        this.initDraw();
+    }
+
+    hideContextMenu() {
+        if (this.contextMenu && this.contextMenu.parentNode) {
+            this.contextMenu.parentNode.removeChild(this.contextMenu);
+            this.contextMenu = null;
+            this.activeHeader = null;
+        }
+    }
+
+    getHeadIndex(mouseX, mouseY) {
+        const { headerLetterHeight, headerNumberWidth } = this.options;
+        if (mouseX >= 0 && mouseX <= headerNumberWidth && mouseY >= 0 && mouseY <= headerLetterHeight) {
+            return { type: 'all', index: -1 };
+        }
+        if (mouseX >= 0 && mouseX <= headerNumberWidth && mouseY > headerLetterHeight) {
+            let currentY = headerLetterHeight;
+            for (let i = 0; i < this.options.numRows; i++) {
+                const rowBottomY = currentY + this.rowHeights[i];
+
+                if (mouseY >= currentY && mouseY < rowBottomY) {
+                    return { type: 'row', index: i, startSize: this.rowHeights[i] };
+                }
+                currentY = rowBottomY;
+            }
+        }
+        if (mouseY >= 0 && mouseY <= headerLetterHeight && mouseX > headerNumberWidth) {
+            let currentX = headerNumberWidth;
+            for (let i = 0; i < this.options.numCols; i++) {
+                const colRightX = currentX + this.colWidths[i];
+
+                if (mouseX >= currentX && mouseX < colRightX) {
+                    return { type: 'col', index: i, startSize: this.colWidths[i] };
+                }
+                currentX = colRightX;
+            }
+        }
+        return null;
+    }
+    handleDoubleClick(event) {
+        if (this.isEditing) {
             return;
         }
         const mousePos = this.getMousePos(event);
-        const cell = this.getCellIndex(mousePos.x,mousePos.y);
-        if(cell){
-            const cellRect = this.getCellRect(cell.row,cell.col);
-            if(!cellRect) return;
+        const cell = this.getCellIndex(mousePos.x + this.scrollOffsetX, mousePos.y + this.scrollOffsetY);
+        if (cell) {
+            const cellRect = this.getCellRect(cell.row, cell.col);
+            if (!cellRect) return;
             this.isEditing = true;
             this.editingCell = cell;
 
@@ -260,7 +400,7 @@ class excelCanvas {
             this.editorInput.value = this.cellsData[cell.row][cell.col];
 
             this.editorInput.classList.add('excel-editor-input');
-           
+
             this.positionEditorInput();
             document.body.appendChild(this.editorInput);
 
@@ -273,13 +413,13 @@ class excelCanvas {
         }
     }
 
-     positionEditorInput() {
+    positionEditorInput() {
         if (!this.isEditing || !this.editorInput) return;
 
         const { row, col } = this.editingCell;
         const cellRect = this.getCellRect(row, col);
 
-        if (!cellRect)  return;
+        if (!cellRect) return;
 
         const containerRect = this.container.getBoundingClientRect();
 
@@ -297,55 +437,57 @@ class excelCanvas {
         const containerVisibleHeight = this.container.clientHeight;
 
         if (inputRight < 0 || inputBottom < 0 || inputLeft > containerVisibleWidth || inputTop > containerVisibleHeight) {
-            this.editorInput.style.display = 'none'; 
+            this.editorInput.style.display = 'none';
         } else {
-            this.editorInput.style.display = 'block'; 
+            this.editorInput.style.display = 'block';
         }
     }
 
-    getCellIndex(mouseX,mouseY){
-        const{headerLetterHeight,headerNumberWidth} = this.options;
-        if(mouseX <headerNumberWidth || mouseY <headerLetterHeight){
+    getCellIndex(mouseX, mouseY) {
+        const { headerLetterHeight, headerNumberWidth } = this.options;
+        if (mouseX < headerNumberWidth || mouseY < headerLetterHeight) {
             return;
         }
         let colIndex = -1;
         let currentX = headerNumberWidth;
-        for(let i = 0;i< this.options.numCols;i++){
+        for (let i = 0; i < this.options.numCols; i++) {
             currentX += this.colWidths[i];
-            if(mouseX < currentX){
-                colIndex = i ;
+            if (mouseX < currentX) {
+                colIndex = i;
                 break;
             }
         }
         let rowIndex = -1;
         let currentY = headerLetterHeight;
-        for(let i = 0;i< this.options.numRows;i++){
+        for (let i = 0; i < this.options.numRows; i++) {
             currentY += this.rowHeights[i];
-            if(mouseY < currentY){
-                rowIndex = i ;
+            if (mouseY < currentY) {
+                rowIndex = i;
                 break;
             }
         }
 
-        if(rowIndex !== -1 && colIndex !==-1){
-            return { row:rowIndex,col:colIndex};
+        if (rowIndex !== -1 && colIndex !== -1) {
+            return { row: rowIndex, col: colIndex };
         }
         return null;
     }
-    getCellRect(rowIndex, colIndex){
+    getCellRect(rowIndex, colIndex) {
         let x = this.options.headerNumberWidth;
-        for(let i = 0;i<colIndex;i++){
-            x+=this.colWidths[i];
+        for (let i = 0; i < colIndex; i++) {
+            x += this.colWidths[i];
         }
+        x -= this.scrollOffsetX;
         let y = this.options.headerLetterHeight;
-        for(let i = 0;i<rowIndex;i++){
-            y+=this.rowHeights[i];
+        for (let i = 0; i < rowIndex; i++) {
+            y += this.rowHeights[i];
         }
+        y -= this.scrollOffsetY;
         const width = this.colWidths[colIndex];
         const height = this.rowHeights[rowIndex];
-        return {x,y,width,height };
+        return { x, y, width, height };
     }
-    
+
 
     handleScroll() {
         this.scrollOffsetX = this.container.scrollLeft;
@@ -361,10 +503,10 @@ class excelCanvas {
     saveEditorValue = () => {
         if (this.isEditing && this.editorInput) {
             this.cellsData[this.editingCell.row][this.editingCell.col] = this.editorInput.value;
-            this.editorInput.remove();   
+            this.editorInput.remove();
             this.editorInput = null;
             this.isEditing = false;
-            this.editingCell = {row:-1,col:-1};
+            this.editingCell = { row: -1, col: -1 };
 
             this.initDraw();
         }
@@ -396,9 +538,7 @@ class excelCanvas {
         if (mouseY >= 0 && mouseY <= headerLetterHeight) {
             let accumulatedWidth = headerNumberWidth;
             for (let i = 0; i < this.options.numCols; i++) {
-
                 const colRightX = accumulatedWidth + this.colWidths[i];
-
                 if (Math.abs(mouseX - colRightX) <= resizeThreshold) {
                     return { type: 'col', index: i, startSize: this.colWidths[i] };
                 }
@@ -420,13 +560,34 @@ class excelCanvas {
                 this.saveEditorValue();
             }
         }
-        const resizeTarget = this.getResizeTarget(x, y);
+
+        this.activeHeader = null;
+        this.selectedCols.clear();
+        this.selectedRows.clear();
+        const headIndex = this.getHeadIndex(x + this.scrollOffsetX, y + this.scrollOffsetY);
+        if (headIndex) {
+            if (headIndex.type === 'row') {
+                this.selectedCols.add(headIndex.index);
+            } else if (headIndex.type === 'col') {
+                this.selectedRows.add(headIndex.index);
+            } else {
+                for (let i = 0; i < this.options.numRows; i++) {
+                    this.selectedRows.add(i);
+                }
+                for (let i = 0; i < this.options.numCols; i++) {
+                    this.selectedCols.add(i);
+                }
+            }
+        }
+        this.initDraw();
+
+        const resizeTarget = this.getResizeTarget(x + this.scrollOffsetX, y + this.scrollOffsetY);
         if (resizeTarget) {
             this.isResizing = true;
             this.resizeType = resizeTarget.type;
             this.resizeIndex = resizeTarget.index;
-            this.startX = x;
-            this.startY = y;
+            this.startX = x + this.scrollOffsetX;
+            this.startY = y + this.scrollOffsetY;
             this.startSize = resizeTarget.startSize;
 
             event.preventDefault();
@@ -439,8 +600,8 @@ class excelCanvas {
         const { x, y } = mousePos;
 
         if (this.isResizing) {
-            const deltaX = x - this.startX;
-            const deltaY = y - this.startY;
+            const deltaX = x + this.scrollOffsetX - this.startX;
+            const deltaY = y + this.scrollOffsetY - this.startY;
             let newSize;
             if (this.resizeType === 'row') {
                 newSize = Math.max(this.options.minCellSize, this.startSize + deltaY);
@@ -449,7 +610,7 @@ class excelCanvas {
             }
             this.drawResizeGuideLine(newSize);
         } else {
-            const resizeTarget = this.getResizeTarget(x, y);
+            const resizeTarget = this.getResizeTarget(x + this.scrollOffsetX, y + this.scrollOffsetY);
             if (resizeTarget) {
                 this.canvas.style.cursor = resizeTarget.type === 'row' ? 'ns-resize' : 'ew-resize';
             } else {
@@ -466,13 +627,13 @@ class excelCanvas {
 
         let linePos;
         if (this.resizeType === 'row') {
-            linePos = this.getRowYPosition(this.resizeIndex) + newSize;
+            linePos = this.getRowYPosition(this.resizeIndex) + newSize - this.scrollOffsetY;
             this.ctx.beginPath();
             this.ctx.moveTo(0, linePos);
             this.ctx.lineTo(this.canvas.width, linePos);
             this.ctx.stroke();
         } else if (this.resizeType === 'col') {
-            linePos = this.getColXPosition(this.resizeIndex) + newSize;
+            linePos = this.getColXPosition(this.resizeIndex) + newSize - this.scrollOffsetX;
             this.ctx.beginPath();
             this.ctx.moveTo(linePos, 0);
             this.ctx.lineTo(linePos, this.canvas.height);
@@ -504,8 +665,8 @@ class excelCanvas {
     handleMouseUp(event) {
         if (this.isResizing) {
             const mousePos = this.getMousePos(event);
-            const deltaX = mousePos.x - this.startX;
-            const deltaY = mousePos.y - this.startY;
+            const deltaX = mousePos.x + this.scrollOffsetX - this.startX;
+            const deltaY = mousePos.y + this.scrollOffsetY - this.startY;
 
             this.updateSizeAndDraw(deltaX, deltaY);
 
