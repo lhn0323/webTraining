@@ -8,10 +8,18 @@
  - 可选：思考如何支持大量的行和列
 ## 设计
 ### 类设计
-  - app类（app接口）
-  - canvas绘制类（工具类）
-### canvas类设计
-  - 构造初始化
-  - resize功能
-    - 获取鼠标
-    - 点击，移动与释放
+  - ExcelData
+  - ExcelRenderer
+  - ExcelInteraction
+  - ExcelCanvas
+  - AppManager
+### ExcelData类设计
+  - 管理excel的行高、列宽、单元格数据以及行/列的数量。
+### ExcelRenderer类设计
+  - 根据 ExcelData 和配置选项在 Canvas 上绘制表格
+### ExcelInteraction类设计
+  - 处理用户与 Canvas 的交互，如鼠标事件、键盘事件、双击编辑等。
+### ExcelCanvas类设计
+  - 提供外部接口
+### AppManage类设计
+  - app

@@ -1,9 +1,3 @@
-class ExcelRender {
-    render() {
-
-    }
-}
-
 class excelCanvas {
 
     constructor(canvasId, options = {}) {
@@ -59,7 +53,7 @@ class excelCanvas {
         this.contextMenu = null;
 
         this.isSelecting = false;
-        this.selectionStartCell = null; // {row, col} 鼠标按下时的单元格
+        this.selectionStartCell = null; 
         this.selectionEndCell = null; 
 
         this.addEventListeners();
@@ -529,7 +523,10 @@ class excelCanvas {
     saveEditorValue = () => {
         if (this.isEditing && this.editorInput) {
             this.cellsData[this.editingCell.row][this.editingCell.col] = this.editorInput.value;
-            this.editorInput.remove();
+            if (this.editorInput.parentNode) {
+                this.editorInput.remove();
+            }
+
             this.editorInput = null;
             this.isEditing = false;
             this.editingCell = { row: -1, col: -1 };
@@ -580,12 +577,6 @@ class excelCanvas {
         const mousePos = this.getMousePos(event);
         const { x, y } = mousePos;
 
-        if (this.isEditing) {
-            const cell = this.getCellIndex(x, y);
-            if (!cell || cell.row !== this.editingCell.row || cell.col !== this.editingCell.col) {
-                this.saveEditorValue();
-            }
-        }
         this.selectionEndCell = null;
         this.activeHeader = null; 
 
