@@ -58,6 +58,10 @@ class excelCanvas {
 
         this.contextMenu = null;
 
+        this.isSelecting = false;
+        this.selectionStartCell = null; // {row, col} 鼠标按下时的单元格
+        this.selectionEndCell = null; 
+
         this.addEventListeners();
 
         this.boundHideContextMenu = this.hideContextMenu.bind(this);
@@ -162,7 +166,7 @@ class excelCanvas {
             cellY += this.rowHeights[r];
         }
 
-        // ---绘制整行和列---
+        // ---绘制选中整行和列---
         this.ctx.fillStyle = selectionRowsOrCols;
         let currrentYSelection = headerLetterHeight;
         for (let r = 0; r < numRows; r++) {
@@ -177,6 +181,26 @@ class excelCanvas {
                 this.ctx.fillRect(currentXForSelection, headerLetterHeight, this.colWidths[c], totalContentHeight);
             }
             currentXForSelection += this.colWidths[c];
+        }
+
+        // --- 绘制选中区域 ---
+        if (this.selectionStartCell && this.selectionEndCell) {
+            const startR = Math.min(this.selectionStartCell.row, this.selectionEndCell.row);
+            const endR = Math.max(this.selectionStartCell.row, this.selectionEndCell.row);
+            const startC = Math.min(this.selectionStartCell.col, this.selectionEndCell.col);
+            const endC = Math.max(this.selectionStartCell.col, this.selectionEndCell.col);
+
+            let currentDrawY = headerLetterHeight;
+            for (let r = 0; r < numRows; r++) {
+                let currentDrawX = headerNumberWidth;
+                for (let c = 0; c < numCols; c++) {
+                    if (r >= startR && r <= endR && c >= startC && c <= endC) {
+                        this.ctx.fillRect(currentDrawX, currentDrawY, this.colWidths[c], this.rowHeights[r]);
+                    }
+                    currentDrawX += this.colWidths[c];
+                }
+                currentDrawY += this.rowHeights[r];
+            }
         }
 
         this.ctx.restore();
@@ -321,6 +345,7 @@ class excelCanvas {
         this.activeHeader = null;
         this.initDraw();
     }
+
     //行
     insertRow(index) {
         this.cellsData.splice(index, 0, new Array(this.options.numCols).fill(''));
@@ -383,6 +408,7 @@ class excelCanvas {
         }
         return null;
     }
+
     handleDoubleClick(event) {
         if (this.isEditing) {
             return;
@@ -472,6 +498,7 @@ class excelCanvas {
         }
         return null;
     }
+
     getCellRect(rowIndex, colIndex) {
         let x = this.options.headerNumberWidth;
         for (let i = 0; i < colIndex; i++) {
@@ -487,7 +514,6 @@ class excelCanvas {
         const height = this.rowHeights[rowIndex];
         return { x, y, width, height };
     }
-
 
     handleScroll() {
         this.scrollOffsetX = this.container.scrollLeft;
@@ -560,6 +586,8 @@ class excelCanvas {
                 this.saveEditorValue();
             }
         }
+        this.selectionEndCell = null;
+        this.activeHeader = null; 
 
         this.activeHeader = null;
         this.selectedCols.clear();
@@ -593,6 +621,14 @@ class excelCanvas {
             event.preventDefault();
         }
 
+        const clickedCell = this.getCellIndex(x + this.scrollOffsetX, y + this.scrollOffsetY);
+        if (clickedCell) {
+            this.isCellSelecting = true; 
+            this.selectionStartCell = clickedCell;
+            this.selectionEndCell = clickedCell; 
+            this.initDraw(); 
+        }
+
     }
 
     handleMouseMove(event) {
@@ -609,7 +645,13 @@ class excelCanvas {
                 newSize = Math.max(this.options.minCellSize, this.startSize + deltaX);
             }
             this.drawResizeGuideLine(newSize);
-        } else {
+        } else if (this.isCellSelecting) { 
+            const currentCell = this.getCellIndex(x + this.scrollOffsetX, y + this.scrollOffsetY);
+            if (currentCell) {
+                this.selectionEndCell = currentCell;
+                this.initDraw();
+            }
+        }else {
             const resizeTarget = this.getResizeTarget(x + this.scrollOffsetX, y + this.scrollOffsetY);
             if (resizeTarget) {
                 this.canvas.style.cursor = resizeTarget.type === 'row' ? 'ns-resize' : 'ew-resize';
@@ -674,6 +716,9 @@ class excelCanvas {
             this.resizeType = null;
             this.resizeIndex = -1;
             this.canvas.style.cursor = 'default';
+        }else if (this.isCellSelecting) { 
+            this.isCellSelecting = false;
+            this.initDraw();
         }
     }
 
