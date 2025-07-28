@@ -1,4 +1,4 @@
-class ExcelRenderer {
+class ExcelRender {
     constructor(canvas, ctx, excelData, options) {
         this.canvas = canvas;
         this.ctx = ctx;

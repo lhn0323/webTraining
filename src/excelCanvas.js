@@ -2,7 +2,6 @@ class ExcelCanvas {
     constructor(canvasId, options = {}) {
         this.canvas = document.getElementById(canvasId);
         if (!this.canvas) {
-            console.error(`Canvas element with ID '${canvasId}' not found.`);
             return;
         }
         this.ctx = this.canvas.getContext("2d");
@@ -30,23 +29,23 @@ class ExcelCanvas {
         this.options = { ...defaultOptions, ...options };
 
         this.excelData = new ExcelData(this.options);
-        this.excelRenderer = new ExcelRenderer(this.canvas, this.ctx, this.excelData, this.options);
-        this.excelInteraction = new ExcelInteraction(this.canvas, this.container, this.excelData, this.excelRenderer, this.options);
+        this.excelRender = new ExcelRender(this.canvas, this.ctx, this.excelData, this.options);
+        this.excelInteraction = new ExcelInteraction(this.canvas, this.container, this.excelData, this.excelRender, this.options);
     }
 
     initDraw() {
-        this.excelRenderer.draw();
+        this.excelRender.draw();
     }
 
     setRows(newRows) {
         if (this.excelData.setNumRows(newRows)) {
-            this.excelRenderer.draw();
+            this.excelRender.draw();
         }
     }
 
     setCols(newCols) {
         if (this.excelData.setNumCols(newCols)) {
-            this.excelRenderer.draw();
+            this.excelRender.draw();
         }
     }
 

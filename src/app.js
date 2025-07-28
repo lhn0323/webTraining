@@ -34,14 +34,12 @@ class AppManager {
         });
 
         document.addEventListener("click", (event) => {
-            // 检查点击是否发生在下拉菜单或触发器之外
             if (!this.formatMenuTrigger.contains(event.target) &&
                 !this.formatDropdownContent.contains(event.target)) {
                 this.hideDropdown();
             }
         });
 
-        // 阻止输入框、标签等元素内部点击事件冒泡到 document，防止被误判为“外部点击”而关闭菜单。
         this.formatDropdownContent.addEventListener("click", (event) => {
              event.stopPropagation();
         });

@@ -1,9 +1,9 @@
 class ExcelInteraction {
-    constructor(canvas, container, excelData, excelRenderer, options) {
+    constructor(canvas, container, excelData, excelRender, options) {
         this.canvas = canvas;
         this.container = container;
         this.excelData = excelData;
-        this.excelRenderer = excelRenderer;
+        this.excelRender = excelRender;
         this.options = options;
 
         this.isEditing = false;
@@ -19,9 +19,7 @@ class ExcelInteraction {
 
         this.isSelecting = false; 
         this.activeHeader = null; 
-
         this.contextMenu = null;
-        this.boundHideContextMenu = this.hideContextMenu.bind(this);
 
         this.addEventListeners();
     }
@@ -33,7 +31,7 @@ class ExcelInteraction {
         this.canvas.addEventListener('dblclick', this.handleDoubleClick.bind(this));
         this.container.addEventListener('scroll', this.handleScroll.bind(this));
         this.canvas.addEventListener("contextmenu", this.handleContextMenu.bind(this));
-        document.addEventListener('click', this.boundHideContextMenu); 
+        document.addEventListener('click',  this.hideContextMenu.bind(this)); 
     }
 
     // 鼠标的相对canvas坐标 = 浏览器窗口坐标 - canvas相对视口坐标
@@ -80,12 +78,12 @@ class ExcelInteraction {
         for (let i = 0; i < colIndex; i++) {
             x += this.excelData.colWidths[i];
         }
-        x -= this.excelRenderer.scrollOffsetX;
+        x -= this.excelRender.scrollOffsetX;
         let y = this.options.headerLetterHeight;
         for (let i = 0; i < rowIndex; i++) {
             y += this.excelData.rowHeights[i];
         }
-        y -= this.excelRenderer.scrollOffsetY;
+        y -= this.excelRender.scrollOffsetY;
         const width = this.excelData.colWidths[colIndex];
         const height = this.excelData.rowHeights[rowIndex];
         return { x, y, width, height };
@@ -152,8 +150,8 @@ class ExcelInteraction {
 
         const mousePos = this.getMousePos(event);
 
-        const logicalX = mousePos.x + this.excelRenderer.scrollOffsetX;
-        const logicalY = mousePos.y + this.excelRenderer.scrollOffsetY;
+        const logicalX = mousePos.x + this.excelRender.scrollOffsetX;
+        const logicalY = mousePos.y + this.excelRender.scrollOffsetY;
 
         this.excelData.clearSelection(); 
         this.hideContextMenu(); 
@@ -173,7 +171,7 @@ class ExcelInteraction {
                 }
             }
         }
-        this.excelRenderer.draw();
+        this.excelRender.draw();
 
         const resizeTarget = this.getResizeTarget(logicalX, logicalY);
         if (resizeTarget) {
@@ -192,14 +190,14 @@ class ExcelInteraction {
             this.isSelecting = true; 
             this.excelData.selectionStartCell = clickedCell;
             this.excelData.selectionEndCell = clickedCell;
-            this.excelRenderer.draw();
+            this.excelRender.draw();
         }
     }
 
     handleMouseMove(event) {
         const mousePos = this.getMousePos(event);
-        const logicalX = mousePos.x + this.excelRenderer.scrollOffsetX;
-        const logicalY = mousePos.y + this.excelRenderer.scrollOffsetY;
+        const logicalX = mousePos.x + this.excelRender.scrollOffsetX;
+        const logicalY = mousePos.y + this.excelRender.scrollOffsetY;
 
         if (this.isResizing) {
             const deltaX = logicalX - this.startX;
@@ -210,12 +208,12 @@ class ExcelInteraction {
             } else if (this.resizeType === 'col') {
                 newSize = Math.max(this.options.minCellSize, this.startSize + deltaX);
             }
-            this.excelRenderer.drawResizeGuideLine(newSize, this.resizeType, this.resizeIndex);
+            this.excelRender.drawResizeGuideLine(newSize, this.resizeType, this.resizeIndex);
         } else if (this.isSelecting) {
             const currentCell = this.getCellIndex(logicalX, logicalY);
             if (currentCell) {
                 this.excelData.selectionEndCell = currentCell;
-                this.excelRenderer.draw();
+                this.excelRender.draw();
             }
         } else {
             const resizeTarget = this.getResizeTarget(logicalX, logicalY);
@@ -230,8 +228,8 @@ class ExcelInteraction {
     handleMouseUp(event) {
         if (this.isResizing) {
             const mousePos = this.getMousePos(event);
-            const deltaX = mousePos.x + this.excelRenderer.scrollOffsetX - this.startX;
-            const deltaY = mousePos.y + this.excelRenderer.scrollOffsetY - this.startY;
+            const deltaX = mousePos.x + this.excelRender.scrollOffsetX - this.startX;
+            const deltaY = mousePos.y + this.excelRender.scrollOffsetY - this.startY;
 
             if (this.resizeType === 'row') {
                 const newHeight = Math.max(this.options.minCellSize, this.startSize + deltaY);
@@ -241,11 +239,11 @@ class ExcelInteraction {
                 this.excelData.setColWidth(this.resizeIndex, newWidth);
             }
             this.isResizing = false;
-            this.excelRenderer.draw(); 
+            this.excelRender.draw(); 
             this.canvas.style.cursor = 'default';
         } else if (this.isSelecting) {
             this.isSelecting = false;
-            this.excelRenderer.draw(); 
+            this.excelRender.draw(); 
         }
     }
 
@@ -254,8 +252,8 @@ class ExcelInteraction {
             return;
         }
         const mousePos = this.getMousePos(event);
-        const logicalX = mousePos.x + this.excelRenderer.scrollOffsetX;
-        const logicalY = mousePos.y + this.excelRenderer.scrollOffsetY;
+        const logicalX = mousePos.x + this.excelRender.scrollOffsetX;
+        const logicalY = mousePos.y + this.excelRender.scrollOffsetY;
 
         const cell = this.getCellIndex(logicalX, logicalY);
         if (cell) {
@@ -264,7 +262,7 @@ class ExcelInteraction {
 
             this.isEditing = true;
             this.editingCell = cell;
-            this.excelRenderer.setEditingCell(cell.row, cell.col); 
+            this.excelRender.setEditingCell(cell.row, cell.col); 
 
             this.editorInput = document.createElement('input');
             this.editorInput.type = 'text';
@@ -287,7 +285,7 @@ class ExcelInteraction {
                 }
             };
 
-            this.excelRenderer.draw(); 
+            this.excelRender.draw(); 
         }
     }
 
@@ -301,13 +299,13 @@ class ExcelInteraction {
 
         const containerRect = this.container.getBoundingClientRect();
 
-        this.editorInput.style.left = (containerRect.left + cellRect.x - this.excelRenderer.scrollOffsetX) + 'px';
-        this.editorInput.style.top = (containerRect.top + cellRect.y - this.excelRenderer.scrollOffsetY) + 'px';
+        this.editorInput.style.left = (containerRect.left + cellRect.x - this.excelRender.scrollOffsetX) + 'px';
+        this.editorInput.style.top = (containerRect.top + cellRect.y - this.excelRender.scrollOffsetY) + 'px';
         this.editorInput.style.width = (cellRect.width) + 'px';
         this.editorInput.style.height = (cellRect.height) + 'px';
 
-        const inputLeft = cellRect.x - this.excelRenderer.scrollOffsetX;
-        const inputTop = cellRect.y - this.excelRenderer.scrollOffsetY;
+        const inputLeft = cellRect.x - this.excelRender.scrollOffsetX;
+        const inputTop = cellRect.y - this.excelRender.scrollOffsetY;
         const inputRight = inputLeft + cellRect.width;
         const inputBottom = inputTop + cellRect.height;
 
@@ -325,13 +323,13 @@ class ExcelInteraction {
         if (this.isEditing && this.editorInput) {
             this.excelData.setCellValue(this.editingCell.row, this.editingCell.col, this.editorInput.value);
             this.removeEditor();
-            this.excelRenderer.draw();
+            this.excelRender.draw();
         }
     }
 
     cancelEditor() {
         this.removeEditor();
-        this.excelRenderer.draw();
+        this.excelRender.draw();
     }
 
     removeEditor() {
@@ -341,14 +339,14 @@ class ExcelInteraction {
         this.editorInput = null;
         this.isEditing = false;
         this.editingCell = { row: -1, col: -1 };
-        this.excelRenderer.clearEditingCell(); 
+        this.excelRender.clearEditingCell(); 
     }
 
     handleScroll() {
         const scrollOffsetX = this.container.scrollLeft;
         const scrollOffsetY = this.container.scrollTop;
-        this.excelRenderer.setScrollOffset(scrollOffsetX, scrollOffsetY);
-        this.excelRenderer.draw();
+        this.excelRender.setScrollOffset(scrollOffsetX, scrollOffsetY);
+        this.excelRender.draw();
 
         if (this.isEditing && this.editorInput) {
             this.positionEditorInput();
@@ -358,8 +356,8 @@ class ExcelInteraction {
     handleContextMenu(event) {
         event.preventDefault();
         const mousePos = this.getMousePos(event);
-        const logicalX = mousePos.x + this.excelRenderer.scrollOffsetX;
-        const logicalY = mousePos.y + this.excelRenderer.scrollOffsetY;
+        const logicalX = mousePos.x + this.excelRender.scrollOffsetX;
+        const logicalY = mousePos.y + this.excelRender.scrollOffsetY;
 
         const headInfo = this.getHeadIndex(logicalX, logicalY);
         this.hideContextMenu(); 
@@ -371,13 +369,13 @@ class ExcelInteraction {
             } else {
                 this.excelData.selectedRows.add(headInfo.index); 
             }
-            this.excelRenderer.draw();
+            this.excelRender.draw();
             this.activeHeader = { type: headInfo.type, index: headInfo.index }; 
             this.showContextMenu(event.clientX, event.clientY, headInfo.type);
         } else {
             this.activeHeader = null;
             this.excelData.clearSelection(); 
-            this.excelRenderer.draw();
+            this.excelRender.draw();
         }
     }
 
@@ -426,24 +424,24 @@ class ExcelInteraction {
 
     insertCol(index) {
         this.excelData.insertCol(index);
-        this.excelRenderer.draw();
+        this.excelRender.draw();
     }
 
 
     deleteCol(index) {
         if (this.excelData.deleteCol(index)) { 
-            this.excelRenderer.draw();
+            this.excelRender.draw();
         }
     }
 
     insertRow(index) {
         this.excelData.insertRow(index);
-        this.excelRenderer.draw();
+        this.excelRender.draw();
     }
 
     deleteRow(index) {
         if (this.excelData.deleteRow(index)) {
-            this.excelRenderer.draw();
+            this.excelRender.draw();
         }
     }
 }

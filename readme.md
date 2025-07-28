@@ -9,13 +9,13 @@
 ## 设计
 ### 类设计
   - ExcelData
-  - ExcelRenderer
+  - ExcelRender
   - ExcelInteraction
   - ExcelCanvas
   - AppManager
 ### ExcelData类设计
   - 管理excel的行高、列宽、单元格数据以及行/列的数量。
-### ExcelRenderer类设计
+### ExcelRender类设计
   - 根据 ExcelData 和配置选项在 Canvas 上绘制表格
 ### ExcelInteraction类设计
   - 处理用户与 Canvas 的交互，如鼠标事件、键盘事件、双击编辑等。
