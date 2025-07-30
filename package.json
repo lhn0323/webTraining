@@ -1,0 +1,21 @@
+{
+  "name": "webtraining",
+  "version": "1.0.0",
+  "description": "- 有单元格、列头、行头，初始化支持指定的行数和列数，外观参考Excel\r  - 支持Resize操作，可改变任意的行高或列宽\r  - 支持单元格编辑，双击进入编辑状态，离开后保存值。可再次进入单元格修改值。\r  - 支持选中行或列的插入、删除操作\r  - 可选：支持右键菜单\r  - 可选：支持多选效果\r  - 可选：思考如何支持大量的行和列\r ## 设计\r ### 类设计\r   - ExcelData\r   - ExcelRender\r   - ExcelInteraction\r   - ExcelCanvas\r   - AppManager\r ### ExcelData类设计\r   - 管理excel的行高、列宽、单元格数据以及行/列的数量。\r ### ExcelRender类设计\r   - 根据 ExcelData 和配置选项在 Canvas 上绘制表格\r ### ExcelInteraction类设计\r   - 处理用户与 Canvas 的交互，如鼠标事件、键盘事件、双击编辑等。\r ### ExcelCanvas类设计\r   - 提供外部接口\r ### AppManage类设计\r   - app",
+  "main": "app.js",
+  "scripts": {
+    
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lhn0323/webTraining.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lhn0323/webTraining/issues"
+  },
+  "homepage": "https://github.com/lhn0323/webTraining#readme"
+}

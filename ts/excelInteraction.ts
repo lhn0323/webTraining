@@ -1,5 +1,29 @@
-class ExcelInteraction {
-    constructor(canvas, container, excelData, excelRender, options) {
+import { ExcelData } from './excelData.js';
+import { ExcelRender} from './excelRender.js'
+import { ExcelOptions, MousePosition, CellPosition, CellRect, ResizeTarget, HeadInfo, ActiveHeader } from './type';
+export class ExcelInteraction {
+    private canvas: HTMLCanvasElement;
+    private container: HTMLElement;
+    private excelData: ExcelData;
+    private excelRender: ExcelRender;
+    private options: ExcelOptions;
+
+    private isEditing: boolean;
+    private editingCell: CellPosition;
+    private editorInput: HTMLInputElement | null;
+
+    private isResizing: boolean;
+    private resizeType: 'row' | 'col' | null;
+    private resizeIndex: number;
+    private startX: number;
+    private startY: number;
+    private startSize: number;
+
+    private isSelecting: boolean;
+    private activeHeader: ActiveHeader | null;
+    private contextMenu: HTMLDivElement | null;
+
+    constructor(canvas:HTMLCanvasElement, container:HTMLElement, excelData:ExcelData, excelRender:ExcelRender, options:ExcelOptions) {
         this.canvas = canvas;
         this.container = container;
         this.excelData = excelData;
@@ -33,15 +57,10 @@ class ExcelInteraction {
         this.canvas.addEventListener("contextmenu", this.handleContextMenu.bind(this));
         document.addEventListener('click',  this.hideContextMenu); 
 
-        document.addEventListener('click',  a);
-        const self = this;
-        function a () {
-            console.log(self.isSelecting);
-        }
     }
 
     // 鼠标的相对canvas坐标 = 浏览器窗口坐标 - canvas相对视口坐标
-    getMousePos(event) {
+    getMousePos(event: MouseEvent) : MousePosition{
         const rect = this.canvas.getBoundingClientRect();
         return {
             x: event.clientX - rect.left,
@@ -49,7 +68,7 @@ class ExcelInteraction {
         };
     }
 
-    getCellIndex(mouseX, mouseY) {
+    getCellIndex(mouseX: number, mouseY : number) : CellPosition | null {
         const { headerLetterHeight, headerNumberWidth } = this.options;
         if (mouseX < headerNumberWidth || mouseY < headerLetterHeight) {
             return null;
@@ -79,7 +98,7 @@ class ExcelInteraction {
         return null;
     }
 
-    getCellRect(rowIndex, colIndex) {
+    getCellRect(rowIndex: number, colIndex: number) : CellRect{
         let x = this.options.headerNumberWidth;
         for (let i = 0; i < colIndex; i++) {
             x += this.excelData.colWidths[i];
@@ -95,7 +114,7 @@ class ExcelInteraction {
         return { x, y, width, height };
     }
 
-    getResizeTarget(mouseX, mouseY) {
+    getResizeTarget(mouseX : number, mouseY : number) : ResizeTarget | null{
         const { headerLetterHeight, headerNumberWidth, resizeThreshold } = this.options;
 
         if (mouseX >= 0 && mouseX <= headerNumberWidth) {
@@ -121,7 +140,7 @@ class ExcelInteraction {
         return null;
     }
 
-    getHeadIndex(mouseX, mouseY) {
+    getHeadIndex(mouseX : number, mouseY: number) : HeadInfo | null {
         const { headerLetterHeight, headerNumberWidth } = this.options;
         if (mouseX >= 0 && mouseX <= headerNumberWidth && mouseY >= 0 && mouseY <= headerLetterHeight) {
             return { type: 'all', index: -1 };
@@ -151,7 +170,7 @@ class ExcelInteraction {
         return null;
     }
 
-    handleMouseDown(event) {
+    handleMouseDown(event: MouseEvent) {
         if (event.button !== 0) return; 
 
         const mousePos = this.getMousePos(event);
@@ -200,7 +219,7 @@ class ExcelInteraction {
         }
     }
 
-    handleMouseMove(event) {
+    handleMouseMove(event : MouseEvent) {
         const mousePos = this.getMousePos(event);
         const logicalX = mousePos.x + this.excelRender.scrollOffsetX;
         const logicalY = mousePos.y + this.excelRender.scrollOffsetY;
@@ -208,7 +227,7 @@ class ExcelInteraction {
         if (this.isResizing) {
             const deltaX = logicalX - this.startX;
             const deltaY = logicalY - this.startY;
-            let newSize;
+            let newSize:number =0;
             if (this.resizeType === 'row') {
                 newSize = Math.max(this.options.minCellSize, this.startSize + deltaY);
             } else if (this.resizeType === 'col') {
@@ -231,7 +250,7 @@ class ExcelInteraction {
         }
     }
 
-    handleMouseUp(event) {
+    handleMouseUp(event: MouseEvent) {
         if (this.isResizing) {
             const mousePos = this.getMousePos(event);
             const deltaX = mousePos.x + this.excelRender.scrollOffsetX - this.startX;
@@ -253,7 +272,7 @@ class ExcelInteraction {
         }
     }
 
-    handleDoubleClick(event) {
+    handleDoubleClick(event: MouseEvent) {
         if (this.isEditing) {
             return;
         }
@@ -359,7 +378,7 @@ class ExcelInteraction {
         }
     }
 
-    handleContextMenu(event) {
+    handleContextMenu(event :MouseEvent) {
         event.preventDefault();
         const mousePos = this.getMousePos(event);
         const logicalX = mousePos.x + this.excelRender.scrollOffsetX;
@@ -385,7 +404,7 @@ class ExcelInteraction {
         }
     }
 
-    showContextMenu(x, y, type) {
+    showContextMenu(x:number, y:number, type : 'row' | 'col') {
         this.contextMenu = document.createElement('div');
         this.contextMenu.className = 'excel-context-menu';
         this.contextMenu.style.position = 'fixed';
@@ -395,11 +414,11 @@ class ExcelInteraction {
         this.contextMenu.addEventListener('click', (e) => e.stopPropagation());
         this.contextMenu.addEventListener('contextmenu', (e) => e.stopPropagation());
 
-        const createMenuItem = (text, action) => {
+        const createMenuItem = (text:string, action:()=> void): HTMLDivElement => {
             const item = document.createElement('div');
             item.className = 'excel-context-menu-item';
             item.textContent = text;
-            item.onclick = (e) => {
+            item.onclick = (e:MouseEvent) => {
                 e.stopPropagation();
                 action();
                 this.hideContextMenu(); 
@@ -408,19 +427,19 @@ class ExcelInteraction {
         };
 
         if (type === 'row') {
-            this.contextMenu.appendChild(createMenuItem('在上方插入行', () => this.insertRow(this.activeHeader.index)));
-            this.contextMenu.appendChild(createMenuItem('在下方插入行', () => this.insertRow(this.activeHeader.index + 1)));
-            this.contextMenu.appendChild(createMenuItem('删除行', () => this.deleteRow(this.activeHeader.index)));
+            this.contextMenu.appendChild(createMenuItem('在上方插入行', () => this.insertRow(this.activeHeader!.index)));
+            this.contextMenu.appendChild(createMenuItem('在下方插入行', () => this.insertRow(this.activeHeader!.index + 1)));
+            this.contextMenu.appendChild(createMenuItem('删除行', () => this.deleteRow(this.activeHeader!.index)));
         } else if (type === 'col') {
-            this.contextMenu.appendChild(createMenuItem('在左侧插入列', () => this.insertCol(this.activeHeader.index)));
-            this.contextMenu.appendChild(createMenuItem('在右侧插入列', () => this.insertCol(this.activeHeader.index + 1)));
-            this.contextMenu.appendChild(createMenuItem('删除列', () => this.deleteCol(this.activeHeader.index)));
+            this.contextMenu.appendChild(createMenuItem('在左侧插入列', () => this.insertCol(this.activeHeader!.index)));
+            this.contextMenu.appendChild(createMenuItem('在右侧插入列', () => this.insertCol(this.activeHeader!.index + 1)));
+            this.contextMenu.appendChild(createMenuItem('删除列', () => this.deleteCol(this.activeHeader!.index)));
         }
 
         document.body.appendChild(this.contextMenu);
     }
 
-    hideContextMenu = ()=> {
+    hideContextMenu = ():void=> {
         if (this.contextMenu && this.contextMenu.parentNode) {
             this.contextMenu.parentNode.removeChild(this.contextMenu);
             this.contextMenu = null;
@@ -428,24 +447,24 @@ class ExcelInteraction {
         }
     }
 
-    insertCol(index) {
+    insertCol(index : number): void {
         this.excelData.insertCol(index);
         this.excelRender.draw();
     }
 
 
-    deleteCol(index) {
+    deleteCol(index: number) {
         if (this.excelData.deleteCol(index)) { 
             this.excelRender.draw();
         }
     }
 
-    insertRow(index) {
+    insertRow(index: number) {
         this.excelData.insertRow(index);
         this.excelRender.draw();
     }
 
-    deleteRow(index) {
+    deleteRow(index: number) {
         if (this.excelData.deleteRow(index)) {
             this.excelRender.draw();
         }
